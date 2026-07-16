@@ -113,6 +113,7 @@ async fn main() {
     match args.get(1).map(|s| s.as_str()) {
         Some("createsuperuser") => cli::create_superuser_interactive(&args[2..]).await.unwrap(),
         Some("deleteuser") => cli::delete_user(&args[2..]).await.unwrap(),
+        Some("updatepassword") => cli::update_password(&args[2..]).await.unwrap(),
         Some("listusers") => cli::list_users(&args[2..]).await.unwrap(),
         _ => cli::print_help("my-cli"),
     }

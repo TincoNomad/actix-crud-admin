@@ -70,10 +70,10 @@ pub trait AdminResource: Send + Sync + 'static {
             plural_name: self.plural_name().to_string(),
             slug: self.slug().to_string(),
             icon: self.icon().to_string(),
-            path_list: format!("{}/{}/", prefix, self.slug()),
-            path_new: format!("{}/{}/new", prefix, self.slug()),
-            path_edit: format!("{}/{}/:id/edit", prefix, self.slug()),
-            path_delete: format!("{}/{}/:id/delete", prefix, self.slug()),
+            path_list: format!("/{}/{}/", prefix, self.slug()),
+            path_new: format!("/{}/{}/new", prefix, self.slug()),
+            path_edit: format!("/{}/{}/", prefix, self.slug()),
+            path_delete: format!("/{}/{}/", prefix, self.slug()),
         }
     }
 }

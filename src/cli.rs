@@ -40,6 +40,7 @@ pub fn print_help(bin_name: &str) {
     println!("Commands:");
     println!("  createsuperuser | create | add   Create a new superuser (interactive)");
     println!("  deleteuser <username>             Delete a user by username");
+    println!("  updatepassword <username>         Update a user's password (interactive)");
     println!("  listusers | list | ls             List all users");
     println!("  help                              Show this help");
     println!();
@@ -50,6 +51,7 @@ pub fn print_help(bin_name: &str) {
     println!("  {} createsuperuser", bin_name);
     println!("  {} createsuperuser --file /path/to/users.json", bin_name);
     println!("  {} deleteuser admin", bin_name);
+    println!("  {} updatepassword admin", bin_name);
     println!("  {} listusers", bin_name);
 }
 
@@ -135,7 +137,7 @@ pub async fn list_users(args: &[String]) -> Result<(), CliError> {
     }
     println!("Users stored in: {:?}", file_path);
     println!();
-    println!("{:<20} {:<30} {:<20} {}", "Username", "Email", "Name", "Superuser");
+    println!("{:<20} {:<30} {:<20} Superuser", "Username", "Email", "Name");
     println!("{}", "-".repeat(80));
     for u in &users {
         println!(
@@ -147,6 +149,33 @@ pub async fn list_users(args: &[String]) -> Result<(), CliError> {
         );
     }
     Ok(())
+}
+
+/// Update a user's password interactively from a JsonUserStore at the given path.
+///
+/// Must be called from within a tokio runtime (e.g. `#[tokio::main]`).
+pub async fn update_password(args: &[String]) -> Result<(), CliError> {
+    let (file_path, username) = parse_update_password_args(args)?;
+    let store = JsonUserStore::new(&file_path);
+
+    // Verify the user exists before prompting for a new password.
+    store
+        .find_by_username(&username)
+        .await
+        .map_err(CliError::from)?
+        .ok_or(CliError::Auth(AuthError::NotFound))?;
+
+    let password: String = dialoguer::Password::new()
+        .with_prompt("New password")
+        .with_confirmation("Confirm new password", "Passwords do not match")
+        .interact()
+        .map_err(|e| CliError::Io(format!("input error: {}", e)))?;
+
+    store
+        .update_password(&username, &password)
+        .await
+        .map(|_| println!("Password for user '{}' updated successfully.", username))
+        .map_err(CliError::from)
 }
 
 pub(crate) fn parse_delete_args(args: &[String]) -> Result<(PathBuf, String), CliError> {
@@ -163,5 +192,76 @@ pub(crate) fn parse_delete_args(args: &[String]) -> Result<(PathBuf, String), Cl
         Ok((PathBuf::from(file_path), username.clone()))
     } else {
         Ok((PathBuf::from("users.json"), args[0].clone()))
+    }
+}
+
+pub(crate) fn parse_update_password_args(args: &[String]) -> Result<(PathBuf, String), CliError> {
+    if args.is_empty() {
+        return Err(CliError::Io(
+            "Usage: admin-cli updatepassword <username> [--file <path>]".to_string(),
+        ));
+    }
+    if args[0] == "--file" {
+        let file_path = args.get(1).ok_or_else(|| {
+            CliError::Io("--file requires a path argument".to_string())
+        })?;
+        let username = args.get(2).ok_or_else(|| {
+            CliError::Io(
+                "Usage: admin-cli updatepassword <username> --file <path>".to_string(),
+            )
+        })?;
+        Ok((PathBuf::from(file_path), username.clone()))
+    } else {
+        Ok((PathBuf::from("users.json"), args[0].clone()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_delete_args_default_file() {
+        let (path, username) = parse_delete_args(&["alice".to_string()]).unwrap();
+        assert_eq!(path, PathBuf::from("users.json"));
+        assert_eq!(username, "alice");
+    }
+
+    #[test]
+    fn test_parse_delete_args_custom_file() {
+        let (path, username) =
+            parse_delete_args(&["--file".to_string(), "/tmp/u.json".to_string(), "bob".to_string()])
+                .unwrap();
+        assert_eq!(path, PathBuf::from("/tmp/u.json"));
+        assert_eq!(username, "bob");
+    }
+
+    #[test]
+    fn test_parse_delete_args_missing_username() {
+        assert!(parse_delete_args(&[]).is_err());
+    }
+
+    #[test]
+    fn test_parse_update_password_args_default_file() {
+        let (path, username) = parse_update_password_args(&["alice".to_string()]).unwrap();
+        assert_eq!(path, PathBuf::from("users.json"));
+        assert_eq!(username, "alice");
+    }
+
+    #[test]
+    fn test_parse_update_password_args_custom_file() {
+        let (path, username) = parse_update_password_args(&[
+            "--file".to_string(),
+            "/tmp/u.json".to_string(),
+            "bob".to_string(),
+        ])
+        .unwrap();
+        assert_eq!(path, PathBuf::from("/tmp/u.json"));
+        assert_eq!(username, "bob");
+    }
+
+    #[test]
+    fn test_parse_update_password_args_missing_username() {
+        assert!(parse_update_password_args(&[]).is_err());
     }
 }

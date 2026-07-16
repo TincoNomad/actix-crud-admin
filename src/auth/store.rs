@@ -54,6 +54,15 @@ pub trait UserStore: Send + Sync + 'static {
     ) -> Result<User, AuthError>;
 
     async fn delete_user(&self, username: &str) -> Result<(), AuthError>;
+
+    async fn update_password(
+        &self,
+        _username: &str,
+        _new_password: &str,
+    ) -> Result<(), AuthError> {
+        // Default: implementations should override.
+        Err(AuthError::Storage("update_password not implemented".to_string()))
+    }
 }
 
 pub fn hash_password(password: &str) -> Result<String, AuthError> {

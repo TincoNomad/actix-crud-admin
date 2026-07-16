@@ -6,7 +6,7 @@ This guide covers common issues and solutions when working with actix-web-admin.
 
 ### 1. "Cannot start a runtime from within a runtime"
 
-**Problem:** Using CLI functions (`cli::create_superuser_interactive`, `cli::delete_user`, `cli::list_users`) inside an existing Tokio runtime panics with:
+**Problem:** Using CLI functions (`cli::create_superuser_interactive`, `cli::delete_user`, `cli::update_password`, `cli::list_users`) inside an existing Tokio runtime panics with:
 
 ```
 Cannot start a runtime from within a runtime.

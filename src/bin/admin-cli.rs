@@ -15,6 +15,7 @@ async fn main() {
     let result = match command {
         "createsuperuser" | "create" | "add" => cli::create_superuser_interactive(&args[2..]).await,
         "deleteuser" | "delete" | "remove" => cli::delete_user(&args[2..]).await,
+        "updatepassword" | "update-password" | "passwd" => cli::update_password(&args[2..]).await,
         "listusers" | "list" | "ls" => cli::list_users(&args[2..]).await,
         "help" | "--help" | "-h" => {
             cli::print_help(&bin_name);

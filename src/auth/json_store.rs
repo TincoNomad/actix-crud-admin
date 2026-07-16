@@ -115,6 +115,24 @@ impl store::UserStore for JsonUserStore {
         self.save()?;
         Ok(())
     }
+
+    async fn update_password(
+        &self,
+        username: &str,
+        new_password: &str,
+    ) -> Result<(), AuthError> {
+        let mut users = self.users.lock().map_err(|e| {
+            AuthError::Storage(format!("lock error: {}", e))
+        })?;
+        let user = users
+            .iter_mut()
+            .find(|u| u.username == username)
+            .ok_or(AuthError::NotFound)?;
+        user.password_hash = store::hash_password(new_password)?;
+        drop(users);
+        self.save()?;
+        Ok(())
+    }
 }
 
 impl JsonUserStore {
@@ -240,6 +258,33 @@ mod tests {
             assert!(found.is_some(), "user should persist to disk");
             assert_eq!(found.unwrap().email, "carol@test.com");
         }
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[tokio::test]
+    async fn test_update_password() {
+        let dir = std::env::temp_dir();
+        let path = dir.join("test_users_update_password.json");
+        let _ = std::fs::remove_file(&path);
+
+        let store = JsonUserStore::new(&path);
+        store
+            .create_user("eve", "eve@test.com", "Eve", "old_secret", false)
+            .await
+            .unwrap();
+
+        store
+            .update_password("eve", "new_secret")
+            .await
+            .expect("should update existing user's password");
+
+        let found = store.find_by_username("eve").await.unwrap().unwrap();
+        assert!(crate::auth::store::verify_password("new_secret", &found.password_hash).unwrap());
+        assert!(!crate::auth::store::verify_password("old_secret", &found.password_hash).unwrap());
+
+        let result = store.update_password("nonexistent", "any").await;
+        assert!(matches!(result, Err(AuthError::NotFound)));
 
         let _ = std::fs::remove_file(&path);
     }

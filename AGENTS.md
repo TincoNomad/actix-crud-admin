@@ -56,7 +56,7 @@
 - **AdminRegistry**: Holds registered resources; order matters for UI
 - **AdminResource**: Trait that resources implement to define CRUD operations
 - **UserStore**: Trait for authentication backend (JsonUserStore included)
-- **cli module**: Public async functions for user management (create, delete, list)
+- **cli module**: Public async functions for user management (create, delete, update password, list)
 - **Templates**: Embedded at compile time via `include_str!` in `lib.rs`
 
 ### 🔧 Key Patterns
@@ -71,7 +71,7 @@
 ### 🧪 Testing Strategy
 - Tests use mock resources implementing `AdminResource`
 - Tests located in `tests/test_*.rs` and inside `src/` modules
-- 23 tests total: 13 unit (auth/store, middleware, json_store), 4 handler integration, 3 registry, 2 resource, 1 doc-test
+- 30 tests total: 20 unit (auth/store, middleware, json_store, cli), 4 handler integration, 3 registry, 2 resource, 1 doc-test
 - All tests passing in release mode
 
 ### 📦 Published Modules

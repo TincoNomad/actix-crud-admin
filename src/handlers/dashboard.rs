@@ -42,8 +42,8 @@ pub async fn index(
             "plural_name": r.plural_name(),
             "slug": r.slug(),
             "icon": r.icon(),
-            "path_list": format!("{}/{}/", prefix.0, r.slug()),
-            "path_new": format!("{}/{}/new", prefix.0, r.slug()),
+            "path_list": format!("/{}/{}/", prefix.0, r.slug()),
+            "path_new": format!("/{}/{}/new", prefix.0, r.slug()),
         })
     }).collect();
     info!("Found {} resources", simple_resources.len());

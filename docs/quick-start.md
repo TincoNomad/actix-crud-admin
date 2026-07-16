@@ -120,6 +120,9 @@ cargo install actix-web-admin
 # Create your first admin user
 admin-cli --file users.json createsuperuser
 
+# Update a user's password
+admin-cli --file users.json updatepassword admin
+
 # Or use the binary from your project
 cargo run --bin admin-cli -- createsuperuser
 ```

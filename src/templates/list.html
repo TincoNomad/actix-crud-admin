@@ -45,7 +45,7 @@
             {% if resource.can_delete %}
             <td>
                 <a href="{{ resource.path_edit }}{{ row.id }}" class="btn" style="border: 1px solid var(--border);">Edit</a>
-                <form action="{{ resource.path_delete }}{{ row.id }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure?');">
+                <form action="{{ resource.path_delete }}{{ row.id }}/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure?');">
                     <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
             </td>

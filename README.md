@@ -166,6 +166,7 @@ Install the crate and manage users from the command line:
 cargo install actix-web-admin
 admin-cli createsuperuser              # interactive user creation
 admin-cli deleteuser <username>         # delete a user
+admin-cli updatepassword <username>     # update a user's password
 admin-cli listusers                     # list all users
 admin-cli --file /path/to/users.json    # specify custom JSON path
 ```
@@ -183,6 +184,7 @@ async fn main() {
     match args.get(1).map(|s| s.as_str()) {
         Some("createsuperuser") => cli::create_superuser_interactive(&args[2..]).await.unwrap(),
         Some("deleteuser") => cli::delete_user(&args[2..]).await.unwrap(),
+        Some("updatepassword") => cli::update_password(&args[2..]).await.unwrap(),
         Some("listusers") => cli::list_users(&args[2..]).await.unwrap(),
         _ => cli::print_help("my-cli"),
     }
