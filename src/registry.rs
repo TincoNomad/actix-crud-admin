@@ -3,9 +3,16 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Registry of all admin resources.
+#[derive(Clone)]
 pub struct AdminRegistry {
     resources: HashMap<String, Arc<dyn AdminResource>>,
     order: Vec<String>,
+}
+
+impl Default for AdminRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AdminRegistry {

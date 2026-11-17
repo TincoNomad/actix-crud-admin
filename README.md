@@ -1,6 +1,10 @@
-# actix-web-admin
+# actix-crud-admin
 
-A powerful admin panel library for Actix-web 4 applications that automatically generates CRUD interfaces with a pluggable authentication system.
+Auto-generated CRUD admin for Actix-web 4, with a pluggable authentication system.
+
+Not related to the [`actix-admin`](https://crates.io/crates/actix-admin) crate, which is a
+different project. This one generates the CRUD from a resource registry instead of
+asking you to write the handlers.
 
 ## Features
 
@@ -19,7 +23,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-actix-web-admin = "0.1.0"
+actix-crud-admin = "0.2.0"
 actix-web = "4"
 actix-session = { version = "0.9", features = ["cookie-session"] }
 tokio = { version = "1", features = ["full"] }
@@ -31,12 +35,12 @@ tokio = { version = "1", features = ["full"] }
 use actix_web::{web, App, HttpServer};
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web_admin::auth::{UserStore, JsonUserStore};
-use actix_web_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
+use actix_crud_admin::auth::{UserStore, JsonUserStore};
+use actix_crud_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use actix_web_admin::types::*;
+use actix_crud_admin::types::*;
 
 struct Product { id: String, name: String, price: f64, active: bool }
 
@@ -137,7 +141,7 @@ Run and visit `http://localhost:8080/admin` - login with `admin`/`admin`.
 The library uses a `UserStore` trait for authentication. A `JsonUserStore` backed by a JSON file is included:
 
 ```rust
-use actix_web_admin::auth::{UserStore, JsonUserStore};
+use actix_crud_admin::auth::{UserStore, JsonUserStore};
 
 let store = Arc::new(JsonUserStore::new("users.json"));
 store.create_user("admin", "admin@example.com", "Admin", "secret", true).await?;
@@ -156,6 +160,10 @@ Pass the store to both the app data and `AdminSite`:
 
 The `SimpleAuth` struct is deprecated — use `UserStore` instead.
 
+## Forms & Database Integration
+
+For a Django-style guide on connecting your own database models to the admin forms, see [docs/forms.md](docs/forms.md).
+
 ## CLI Tools
 
 ### `admin-cli` binary
@@ -163,7 +171,7 @@ The `SimpleAuth` struct is deprecated — use `UserStore` instead.
 Install the crate and manage users from the command line:
 
 ```bash
-cargo install actix-web-admin
+cargo install actix-crud-admin
 admin-cli createsuperuser              # interactive user creation
 admin-cli deleteuser <username>         # delete a user
 admin-cli updatepassword <username>     # update a user's password
@@ -176,7 +184,7 @@ admin-cli --file /path/to/users.json    # specify custom JSON path
 Build your own CLI in ~10 lines by using the public `cli` module:
 
 ```rust
-use actix_web_admin::cli;
+use actix_crud_admin::cli;
 
 #[tokio::main]
 async fn main() {

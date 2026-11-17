@@ -57,6 +57,28 @@
             background: rgba(255,255,255,0.1);
             opacity: 1;
         }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.75rem 0.25rem 1.5rem;
+        }
+        .nav-item a {
+            padding: 0.5rem 0.75rem;
+            flex: 1;
+        }
+        .nav-item .nav-add {
+            padding: 0.25rem 0.5rem;
+            margin-right: 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 1rem;
+            font-weight: bold;
+            opacity: 0.6;
+        }
+        .nav-item .nav-add:hover {
+            background: rgba(255,255,255,0.15);
+            opacity: 1;
+        }
         .main {
             flex: 1;
             display: flex;
@@ -222,9 +244,14 @@
             {% if user %}
             <a href="{{ path_dashboard }}" class="{% if page_title == 'Dashboard' %}active{% endif %}">Dashboard</a>
             {% for res in resources %}
-            <a href="{{ res.path_list }}" class="{% if current_slug == res.slug %}active{% endif %}">
-                {{ res.plural_name }}
-            </a>
+            <div class="nav-item">
+                <a href="{{ res.path_list }}" class="{% if current_slug == res.slug %}active{% endif %}">
+                    {{ res.plural_name }}
+                </a>
+                {% if res.can_create %}
+                <a href="{{ res.path_new }}" class="nav-add" title="Add {{ res.name }}">+</a>
+                {% endif %}
+            </div>
             {% endfor %}
             {% endif %}
         </nav>

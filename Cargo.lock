@@ -20,6 +20,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "actix-crud-admin"
+version = "0.2.0"
+dependencies = [
+ "actix-http",
+ "actix-session",
+ "actix-web",
+ "argon2",
+ "async-trait",
+ "chrono",
+ "dialoguer",
+ "env_logger",
+ "log",
+ "serde",
+ "serde_json",
+ "tera",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "actix-http"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -187,26 +207,6 @@ dependencies = [
  "time",
  "tracing",
  "url",
-]
-
-[[package]]
-name = "actix-web-admin"
-version = "0.1.1"
-dependencies = [
- "actix-http",
- "actix-session",
- "actix-web",
- "argon2",
- "async-trait",
- "chrono",
- "dialoguer",
- "env_logger",
- "log",
- "serde",
- "serde_json",
- "tera",
- "tokio",
- "uuid",
 ]
 
 [[package]]

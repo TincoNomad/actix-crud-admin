@@ -74,7 +74,7 @@ pub async fn list(
     ctx.insert("page", &result.page);
     ctx.insert("per_page", &result.per_page);
     ctx.insert("total", &result.total);
-    ctx.insert("total_pages", &((result.total + result.per_page - 1) / result.per_page));
+    ctx.insert("total_pages", &result.total.div_ceil(result.per_page));
     
     let prefix_trimmed = prefix.0.trim_start_matches('/');
     ctx.insert("path_dashboard", &format!("/{}/", prefix_trimmed));
@@ -153,15 +153,36 @@ pub async fn create(
         None => return HttpResponse::NotFound().finish(),
     };
 
+    let form_map = form.into_inner();
+    let continue_editing = form_map.contains_key("_continue");
+    let add_another = form_map.contains_key("_addanother");
+
     let mut data = HashMap::new();
-    for (k, v) in form.into_inner() {
+    for (k, v) in form_map {
+        // Ignore submit-button keys so they do not end up in the record data.
+        if k.starts_with('_') {
+            continue;
+        }
         data.insert(k, serde_json::Value::String(v));
     }
 
     match resource.validate(&data).await {
         Ok(_) => {
             match resource.create(data).await {
-                Ok(_) => HttpResponse::Found().insert_header(("Location", format!("/{}/{}/", prefix.0, slug))).finish(),
+                Ok(result) => {
+                    let redirect = if continue_editing {
+                        result
+                            .get("id")
+                            .and_then(|id| id.as_str())
+                            .map(|id| format!("/{}/{}/{}", prefix.0, slug, id))
+                            .unwrap_or_else(|| format!("/{}/{}/", prefix.0, slug))
+                    } else if add_another {
+                        format!("/{}/{}/new", prefix.0, slug)
+                    } else {
+                        format!("/{}/{}/", prefix.0, slug)
+                    };
+                    HttpResponse::Found().insert_header(("Location", redirect)).finish()
+                }
                 Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
             }
         }
@@ -173,6 +194,7 @@ pub async fn create(
             ctx.insert("values", &data);
             ctx.insert("errors", &errors);
             ctx.insert("is_new", &true);
+            ctx.insert("record_id", &"");
             ctx.insert("resources", &registry.all().iter().map(|r| r.info(&prefix.0)).collect::<Vec<_>>());
             ctx.insert("path_dashboard", &format!("/{}/", prefix.0));
             ctx.insert("path_logout", &format!("/{}/logout", prefix.0));
@@ -225,6 +247,7 @@ pub async fn edit(
     ctx.insert("values", &values);
     ctx.insert("errors", &HashMap::<String, String>::new());
     ctx.insert("is_new", &false);
+    ctx.insert("record_id", &id);
     ctx.insert("resources", &registry.all().iter().map(|r| r.info(&prefix.0)).collect::<Vec<_>>());
     let prefix_trimmed = prefix.0.trim_start_matches('/');
     ctx.insert("path_dashboard", &format!("/{}/", prefix_trimmed));
@@ -257,15 +280,31 @@ pub async fn update(
         None => return HttpResponse::NotFound().finish(),
     };
 
+    let form_map = form.into_inner();
+    let continue_editing = form_map.contains_key("_continue");
+    let add_another = form_map.contains_key("_addanother");
+
     let mut data = HashMap::new();
-    for (k, v) in form.into_inner() {
+    for (k, v) in form_map {
+        if k.starts_with('_') {
+            continue;
+        }
         data.insert(k, serde_json::Value::String(v));
     }
 
     match resource.validate(&data).await {
         Ok(_) => {
             match resource.update(&id, data).await {
-                Ok(_) => HttpResponse::Found().insert_header(("Location", format!("/{}/{}/", prefix.0, slug))).finish(),
+                Ok(_) => {
+                    let redirect = if continue_editing {
+                        format!("/{}/{}/{}", prefix.0, slug, id)
+                    } else if add_another {
+                        format!("/{}/{}/new", prefix.0, slug)
+                    } else {
+                        format!("/{}/{}/", prefix.0, slug)
+                    };
+                    HttpResponse::Found().insert_header(("Location", redirect)).finish()
+                }
                 Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
             }
         }
@@ -277,6 +316,7 @@ pub async fn update(
             ctx.insert("values", &data);
             ctx.insert("errors", &errors);
             ctx.insert("is_new", &false);
+            ctx.insert("record_id", &id);
             ctx.insert("resources", &registry.all().iter().map(|r| r.info(&prefix.0)).collect::<Vec<_>>());
             ctx.insert("path_dashboard", &format!("/{}/", prefix.0));
             ctx.insert("path_logout", &format!("/{}/logout", prefix.0));

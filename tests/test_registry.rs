@@ -1,5 +1,5 @@
-use actix_web_admin::{AdminRegistry, AdminResource};
-use actix_web_admin::types::*;
+use actix_crud_admin::{AdminRegistry, AdminResource};
+use actix_crud_admin::types::*;
 use async_trait::async_trait;
 use std::collections::HashMap;
 

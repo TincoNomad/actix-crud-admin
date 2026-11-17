@@ -1,12 +1,12 @@
 use actix_web::{web, App, HttpServer};
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web_admin::auth::UserStore;
-use actix_web_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
+use actix_crud_admin::auth::UserStore;
+use actix_crud_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use actix_web_admin::types::*;
+use actix_crud_admin::types::*;
 
 struct Product {
     id: String,
@@ -149,7 +149,7 @@ async fn main() -> std::io::Result<()> {
     let secret_key = actix_web::cookie::Key::from(b"a_very_long_secret_key_that_is_exactly_64_bytes_long_123456789012");
 
     // Create initial admin user (idempotent — skip if already exists)
-    let store = actix_web_admin::auth::JsonUserStore::new("users.json");
+    let store = actix_crud_admin::auth::JsonUserStore::new("users.json");
     if store.find_by_username("admin").await.unwrap().is_none() {
         store.create_user("admin", "admin@example.com", "Admin", "admin", true).await.unwrap();
     }

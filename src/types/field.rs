@@ -20,6 +20,7 @@ pub struct FormField {
     pub required: bool,
     pub placeholder: Option<String>,
     pub help_text: Option<String>,
+    pub fieldset: Option<String>,
 }
 
 impl FormField {
@@ -31,6 +32,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -42,6 +44,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -53,6 +56,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -64,6 +68,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -75,6 +80,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -86,6 +92,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -101,6 +108,7 @@ impl FormField {
             required: false,
             placeholder: None,
             help_text: None,
+            fieldset: None,
         }
     }
 
@@ -116,6 +124,11 @@ impl FormField {
 
     pub fn help(mut self, h: &str) -> Self {
         self.help_text = Some(h.to_string());
+        self
+    }
+
+    pub fn fieldset(mut self, name: &str) -> Self {
+        self.fieldset = Some(name.to_string());
         self
     }
 }

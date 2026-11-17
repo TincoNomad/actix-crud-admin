@@ -1,6 +1,6 @@
 # Advanced Configuration
 
-This guide covers advanced configuration options for actix-web-admin.
+This guide covers advanced configuration options for actix-crud-admin.
 
 ## Authentication
 
@@ -9,7 +9,7 @@ This guide covers advanced configuration options for actix-web-admin.
 The library uses the `UserStore` trait for authentication. Implement it for your database:
 
 ```rust
-use actix_web_admin::auth::{UserStore, AuthError, User};
+use actix_crud_admin::auth::{UserStore, AuthError, User};
 use async_trait::async_trait;
 use std::sync::Arc;
 
@@ -38,7 +38,7 @@ impl UserStore for MyDatabaseStore {
     }
 
     async fn create_user(&self, username: &str, email: &str, name: &str, password: &str, is_superuser: bool) -> Result<User, AuthError> {
-        let hash = actix_web_admin::auth::hash_password(password)?;
+        let hash = actix_crud_admin::auth::hash_password(password)?;
         let user = sqlx::query_as::<_, User>(
             "INSERT INTO users (username, email, name, password_hash, is_superuser) VALUES ($1, $2, $3, $4, $5) RETURNING *"
         )
@@ -67,7 +67,7 @@ impl UserStore for MyDatabaseStore {
 }
 ```
 
-Then pass it to actix-web-admin:
+Then pass it to actix-crud-admin:
 
 ```rust
 let store = Arc::new(MyDatabaseStore { pool }) as Arc<dyn UserStore>;
@@ -86,7 +86,7 @@ App::new()
 For local development or simple deployments, `JsonUserStore` persists users to a JSON file:
 
 ```rust
-use actix_web_admin::auth::JsonUserStore;
+use actix_crud_admin::auth::JsonUserStore;
 use std::sync::Arc;
 
 let store = Arc::new(JsonUserStore::new("users.json"));
@@ -105,7 +105,7 @@ let store = Arc::new(JsonUserStore::new("users.json"));
 The public `cli` module exposes async functions you can use in your own CLI:
 
 ```rust
-use actix_web_admin::cli;
+use actix_crud_admin::cli;
 
 #[tokio::main]
 async fn main() {
@@ -127,7 +127,7 @@ All functions require an active Tokio runtime (`#[tokio::main]` or `#[actix_web:
 If you use a custom database instead of `JsonUserStore`, write your own CLI:
 
 ```rust
-use actix_web_admin::cli;
+use actix_crud_admin::cli;
 use std::sync::Arc;
 
 #[tokio::main]

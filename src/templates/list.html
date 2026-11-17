@@ -3,7 +3,10 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h2 style="margin: 0;">{{ resource.plural_name }}</h2>
     {% if resource.can_create %}
-    <a href="{{ resource.path_new }}" class="btn btn-primary">+ New {{ resource.name }}</a>
+    <a href="{{ resource.path_new }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.25rem; font-weight: bold;">+</span>
+        <span>Add {{ resource.name }}</span>
+    </a>
     {% endif %}
 </div>
 

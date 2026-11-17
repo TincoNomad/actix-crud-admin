@@ -1,10 +1,10 @@
+use crate::auth::{verify_password, UserStore};
+use crate::resource::{AdminPrefix, AdminTitle};
 use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
 use serde::Deserialize;
 use std::sync::Arc;
 use tera::{Context, Tera};
-use crate::auth::{UserStore, verify_password};
-use crate::resource::{AdminTitle, AdminPrefix};
 
 #[derive(Clone)]
 #[deprecated(note = "use UserStore trait with a concrete implementation instead")]
@@ -26,7 +26,11 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-pub async fn login_page(tmpl: web::Data<Tera>, title: web::Data<AdminTitle>, prefix: web::Data<AdminPrefix>) -> impl Responder {
+pub async fn login_page(
+    tmpl: web::Data<Tera>,
+    title: web::Data<AdminTitle>,
+    prefix: web::Data<AdminPrefix>,
+) -> impl Responder {
     let mut ctx = Context::new();
     ctx.insert("title", &title.0);
     ctx.insert("page_title", "Login");
@@ -75,7 +79,9 @@ pub async fn login(
     ctx.insert("error", "Invalid username or password");
 
     match tmpl.render("login.html", &ctx) {
-        Ok(rendered) => HttpResponse::Unauthorized().content_type("text/html").body(rendered),
+        Ok(rendered) => HttpResponse::Unauthorized()
+            .content_type("text/html")
+            .body(rendered),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
 }

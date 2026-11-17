@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-This guide covers common issues and solutions when working with actix-web-admin.
+This guide covers common issues and solutions when working with actix-crud-admin.
 
 ## Common Issues
 

@@ -1,4 +1,4 @@
-use actix_web_admin::cli;
+use actix_crud_admin::cli;
 
 #[tokio::main]
 async fn main() {

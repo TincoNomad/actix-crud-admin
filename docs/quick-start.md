@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get actix-web-admin running in minutes.
+This guide will help you get actix-crud-admin running in minutes.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-actix-web-admin = "0.1.0"
+actix-crud-admin = "0.1.0"
 actix-web = "4"
 actix-session = { version = "0.9", features = ["cookie-session"] }
 tokio = { version = "1", features = ["full"] }
@@ -35,7 +35,7 @@ struct Product {
 ### Step 2: Implement AdminResource
 
 ```rust
-use actix_web_admin::{AdminResource, types::*};
+use actix_crud_admin::{AdminResource, types::*};
 use async_trait::async_trait;
 use std::collections::HashMap;
 
@@ -73,8 +73,8 @@ impl AdminResource for ProductAdmin {
 use actix_web::{web, App, HttpServer};
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web_admin::auth::{UserStore, JsonUserStore};
-use actix_web_admin::{AdminRegistry, AdminSite, init_templates};
+use actix_crud_admin::auth::{UserStore, JsonUserStore};
+use actix_crud_admin::{AdminRegistry, AdminSite, init_templates};
 use std::sync::Arc;
 
 #[actix_web::main]
@@ -115,7 +115,7 @@ async fn main() -> std::io::Result<()> {
 
 ```bash
 # Install the CLI tool
-cargo install actix-web-admin
+cargo install actix-crud-admin
 
 # Create your first admin user
 admin-cli --file users.json createsuperuser
@@ -140,8 +140,7 @@ Visit `http://localhost:8080/admin` and login.
 
 ## Next Steps
 
+- [Forms & Database Integration](forms.md)
 - [Advanced Configuration](advanced.md)
 - [Security Best Practices](advanced.md#security)
 - [Troubleshooting Guide](troubleshooting.md)
-- [Custom Field Types](custom-fields.md)
-- [Database Integration](database.md)

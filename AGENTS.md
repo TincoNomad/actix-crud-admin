@@ -4,7 +4,7 @@
 - **Type**: Rust library for building admin panels with Actix-web 4
 - **Entry point**: `src/lib.rs` exports `AdminSite`, `AdminRegistry`, `AdminResource`, `cli`
 - **Version**: 0.1.0 ready for publication
-- **Documentation**: Complete README with examples, troubleshooting guide, and advanced configuration
+- **Documentation**: Complete README with examples, troubleshooting guide, forms/database integration guide, and advanced configuration
 - **Status**: Fully tested with real-world implementation validation
 
 ## AI Assistant Skills & Capabilities
@@ -71,7 +71,7 @@
 ### 🧪 Testing Strategy
 - Tests use mock resources implementing `AdminResource`
 - Tests located in `tests/test_*.rs` and inside `src/` modules
-- 30 tests total: 20 unit (auth/store, middleware, json_store, cli), 4 handler integration, 3 registry, 2 resource, 1 doc-test
+- 35 tests total: 20 unit (auth/store, middleware, json_store, cli), 9 handler integration, 3 registry, 2 resource, 1 doc-test
 - All tests passing in release mode
 
 ### 📦 Published Modules

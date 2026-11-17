@@ -1,4 +1,4 @@
-//! # actix-web-admin
+//! # actix-crud-admin
 //!
 //! A powerful admin panel library for Actix-web 4 with a pluggable authentication system.
 //!
@@ -8,8 +8,8 @@
 //! use actix_web::{web, App, HttpServer};
 //! use actix_session::storage::CookieSessionStore;
 //! use actix_session::SessionMiddleware;
-//! use actix_web_admin::auth::{UserStore, JsonUserStore};
-//! use actix_web_admin::{AdminRegistry, AdminSite, init_templates};
+//! use actix_crud_admin::auth::{UserStore, JsonUserStore};
+//! use actix_crud_admin::{AdminRegistry, AdminSite, init_templates};
 //! use std::sync::Arc;
 //!
 //! #[actix_web::main]

@@ -1,12 +1,12 @@
 use actix_web::{test, web, App};
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
-use actix_web_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
+use actix_crud_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
 use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use actix_web_admin::types::*;
-use actix_web_admin::auth::{JsonUserStore, UserStore};
+use actix_crud_admin::types::*;
+use actix_crud_admin::auth::{JsonUserStore, UserStore};
 
 struct MockResource {
     db: Arc<Mutex<Vec<serde_json::Value>>>,
@@ -100,7 +100,7 @@ async fn test_login_and_access_protected() {
 
     let req = test::TestRequest::post()
         .uri("/admin/login")
-        .set_form(&std::collections::HashMap::from([
+        .set_form(std::collections::HashMap::from([
             ("username", "admin"),
             ("password", "admin"),
         ]))
@@ -124,7 +124,7 @@ async fn test_login_by_email() {
 
     let req = test::TestRequest::post()
         .uri("/admin/login")
-        .set_form(&std::collections::HashMap::from([
+        .set_form(std::collections::HashMap::from([
             ("username", "admin@test.com"),
             ("password", "admin"),
         ]))
@@ -140,4 +140,139 @@ async fn test_login_by_email() {
         .to_request();
     let resp = test::call_service(&app, req).await;
     assert!(resp.status().is_success(), "login by email should grant access");
+}
+
+async fn login_cookie(app: &impl actix_web::dev::Service<actix_http::Request, Response = actix_web::dev::ServiceResponse, Error = actix_web::Error>) -> actix_web::cookie::Cookie<'static> {
+    let req = test::TestRequest::post()
+        .uri("/admin/login")
+        .set_form(std::collections::HashMap::from([
+            ("username", "admin"),
+            ("password", "admin"),
+        ]))
+        .to_request();
+    let resp = test::call_service(app, req).await;
+    assert_eq!(resp.status(), 302, "login should redirect");
+    let header = resp
+        .response()
+        .headers()
+        .get("set-cookie")
+        .expect("login should set a session cookie")
+        .to_str()
+        .unwrap()
+        .to_string();
+    actix_web::cookie::Cookie::parse_encoded(header)
+        .expect("set-cookie header should be valid")
+        .into_owned()
+}
+
+#[actix_web::test]
+async fn test_new_form_renders() {
+    let app = setup_app().await;
+    let cookie = login_cookie(&app).await;
+
+    let req = test::TestRequest::get()
+        .uri("/admin/mock/new")
+        .cookie(cookie)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success(), "new form should render");
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8(body.to_vec()).unwrap();
+    assert!(html.contains("Add Mock"), "form should contain page title");
+    assert!(html.contains("id_name"), "form should render name input");
+}
+
+#[actix_web::test]
+async fn test_create_record() {
+    let app = setup_app().await;
+    let cookie = login_cookie(&app).await;
+
+    let req = test::TestRequest::post()
+        .uri("/admin/mock/new")
+        .cookie(cookie)
+        .set_form(std::collections::HashMap::from([
+            ("name", "Test Record"),
+        ]))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 302, "create should redirect to list");
+    assert_eq!(resp.headers().get("location").unwrap(), "/admin/mock/");
+}
+
+#[actix_web::test]
+async fn test_edit_form_renders() {
+    let app = setup_app().await;
+    let cookie = login_cookie(&app).await;
+
+    // Create a record first.
+    let req = test::TestRequest::post()
+        .uri("/admin/mock/new")
+        .cookie(cookie.clone())
+        .set_form(std::collections::HashMap::from([
+            ("name", "Editable Record"),
+        ]))
+        .to_request();
+    test::call_service(&app, req).await;
+
+    let req = test::TestRequest::get()
+        .uri("/admin/mock/1")
+        .cookie(cookie)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert!(resp.status().is_success(), "edit form should render");
+    let body = test::read_body(resp).await;
+    let html = String::from_utf8(body.to_vec()).unwrap();
+    assert!(html.contains("Change Mock"), "form should contain page title");
+    assert!(html.contains("Editable Record"), "form should contain existing value");
+}
+
+#[actix_web::test]
+async fn test_update_record() {
+    let app = setup_app().await;
+    let cookie = login_cookie(&app).await;
+
+    // Create a record first.
+    let req = test::TestRequest::post()
+        .uri("/admin/mock/new")
+        .cookie(cookie.clone())
+        .set_form(std::collections::HashMap::from([
+            ("name", "Old Name"),
+        ]))
+        .to_request();
+    test::call_service(&app, req).await;
+
+    let req = test::TestRequest::post()
+        .uri("/admin/mock/1")
+        .cookie(cookie)
+        .set_form(std::collections::HashMap::from([
+            ("name", "New Name"),
+        ]))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 302, "update should redirect to list");
+    assert_eq!(resp.headers().get("location").unwrap(), "/admin/mock/");
+}
+
+#[actix_web::test]
+async fn test_delete_record() {
+    let app = setup_app().await;
+    let cookie = login_cookie(&app).await;
+
+    // Create a record first.
+    let req = test::TestRequest::post()
+        .uri("/admin/mock/new")
+        .cookie(cookie.clone())
+        .set_form(std::collections::HashMap::from([
+            ("name", "To Delete"),
+        ]))
+        .to_request();
+    test::call_service(&app, req).await;
+
+    let req = test::TestRequest::post()
+        .uri("/admin/mock/1/delete")
+        .cookie(cookie)
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), 302, "delete should redirect to list");
+    assert_eq!(resp.headers().get("location").unwrap(), "/admin/mock/");
 }
