@@ -230,10 +230,10 @@
         <div class="sidebar-header">{{ title }}</div>
         <nav>
             {% if user %}
-            <a href="{{ path_dashboard }}" class="{% if current_slug == '' %}active{% endif %}">{{ labels.dashboard }}</a>
+            <a href="{{ path_dashboard }}" class="{% if current_slug | default(value='') == '' %}active{% endif %}">{{ labels.dashboard }}</a>
             {% for res in resources | default(value=[]) %}
             <div class="nav-item">
-                <a href="{{ res.path_list }}" class="{% if current_slug == res.slug %}active{% endif %}">
+                <a href="{{ res.path_list }}" class="{% if current_slug | default(value='') == res.slug %}active{% endif %}">
                     {{ res.plural_name }}
                 </a>
                 {% if can_write and res.can_create %}
