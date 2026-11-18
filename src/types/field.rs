@@ -11,8 +11,40 @@ pub enum FieldType {
     Select { options: Vec<(String, String)> },
 }
 
+impl FieldType {
+    fn kind(&self) -> &'static str {
+        match self {
+            FieldType::Text => "Text",
+            FieldType::TextArea { .. } => "TextArea",
+            FieldType::Number => "Number",
+            FieldType::Email => "Email",
+            FieldType::Password => "Password",
+            FieldType::Boolean => "Boolean",
+            FieldType::Date => "Date",
+            FieldType::Select { .. } => "Select",
+        }
+    }
+
+    fn rows(&self) -> u8 {
+        match self {
+            FieldType::TextArea { rows } => *rows,
+            _ => 0,
+        }
+    }
+
+    fn options(&self) -> &[(String, String)] {
+        match self {
+            FieldType::Select { options } => options,
+            _ => &[],
+        }
+    }
+}
+
 /// Configuration for a field in the admin create/edit form.
-#[derive(Debug, Clone, serde::Serialize)]
+///
+/// Serialized flat (`field_type` as a string plus `rows`/`options`) because the
+/// Tera templates compare `field.field_type` against strings.
+#[derive(Debug, Clone)]
 pub struct FormField {
     pub key: String,
     pub label: String,
@@ -21,6 +53,23 @@ pub struct FormField {
     pub placeholder: Option<String>,
     pub help_text: Option<String>,
     pub fieldset: Option<String>,
+}
+
+impl serde::Serialize for FormField {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut st = serializer.serialize_struct("FormField", 9)?;
+        st.serialize_field("key", &self.key)?;
+        st.serialize_field("label", &self.label)?;
+        st.serialize_field("field_type", self.field_type.kind())?;
+        st.serialize_field("required", &self.required)?;
+        st.serialize_field("placeholder", &self.placeholder)?;
+        st.serialize_field("help_text", &self.help_text)?;
+        st.serialize_field("fieldset", &self.fieldset)?;
+        st.serialize_field("rows", &self.field_type.rows())?;
+        st.serialize_field("options", self.field_type.options())?;
+        st.end()
+    }
 }
 
 impl FormField {
@@ -89,6 +138,18 @@ impl FormField {
             key: key.to_string(),
             label: label.to_string(),
             field_type: FieldType::Boolean,
+            required: false,
+            placeholder: None,
+            help_text: None,
+            fieldset: None,
+        }
+    }
+
+    pub fn date(key: &str, label: &str) -> Self {
+        Self {
+            key: key.to_string(),
+            label: label.to_string(),
+            field_type: FieldType::Date,
             required: false,
             placeholder: None,
             help_text: None,

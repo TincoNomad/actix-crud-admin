@@ -1,26 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
     <h2 style="margin: 0;">{{ resource.plural_name }}</h2>
-    {% if resource.can_create %}
-    <a href="{{ resource.path_new }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-        <span style="font-size: 1.25rem; font-weight: bold;">+</span>
-        <span>Add {{ resource.name }}</span>
-    </a>
-    {% endif %}
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="{{ resource.path_list }}export?{{ link_query }}" class="btn" style="border: 1px solid var(--border);">{{ labels.export_csv }}</a>
+        {% if can_write and resource.can_create %}
+        <a href="{{ resource.path_new }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.25rem; font-weight: bold;">+</span>
+            <span>{{ labels.add }} {{ resource.name }}</span>
+        </a>
+        {% endif %}
+    </div>
 </div>
 
-<form method="GET" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-    <input type="text" name="search" value="{{ query.search | default(value='') }}" placeholder="Search..." class="form-control" style="max-width: 300px;">
-    <button type="submit" class="btn btn-primary">Search</button>
+<form method="GET" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: end;">
+    <div>
+        <label class="form-label" for="search">{{ labels.search }}</label>
+        <input type="text" id="search" name="search" value="{{ query.search | default(value='') }}" placeholder="{{ labels.search }}..." class="form-control" style="max-width: 280px;">
+    </div>
+    {% if filters %}
+    {% for filter in filters %}
+    <div>
+        <label class="form-label" for="filter_{{ filter.key }}">{{ filter.label }}</label>
+        <select id="filter_{{ filter.key }}" name="filter_{{ filter.key }}" class="form-control">
+            <option value="">{{ labels.all }}</option>
+            {% for option in filter.options %}
+            <option value="{{ option.0 }}" {% if active_filters[filter.key] | default(value='') == option.0 %}selected{% endif %}>{{ option.1 }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endfor %}
+    {% endif %}
+    <button type="submit" class="btn btn-primary">{{ labels.search }}</button>
 </form>
+
+{% if can_write and resource.can_delete %}
+<form method="POST" action="{{ resource.path_list }}bulk" id="bulk-form"
+      onsubmit="return confirm('{{ labels.bulk_delete }}? {{ labels.confirm_delete }}');">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <button type="submit" class="btn btn-danger" style="margin-bottom: 1rem;">{{ labels.bulk_delete }}</button>
+</form>
+{% endif %}
 
 <table>
     <thead>
         <tr>
+            {% if can_write and resource.can_delete %}<th style="width: 2rem;"></th>{% endif %}
             {% for col in columns %}
             <th>
-                <a href="{{ resource.path_list }}?sort_by={{ col.key }}" style="color: inherit; text-decoration: none; display: block;">
+                <a href="{{ resource.path_list }}?{{ link_query }}sort_by={{ col.key }}" style="color: inherit; text-decoration: none; display: block;">
                     {{ col.label }}
                     {% if query.sort_by | default(value='') == col.key %}
                         {% if query.sort_dir | default(value='asc') == 'asc' %}▲{% else %}▼{% endif %}
@@ -28,28 +56,30 @@
                 </a>
             </th>
             {% endfor %}
-            {% if resource.can_delete %}
-            <th>Actions</th>
-            {% endif %}
+            {% if can_write and resource.can_delete %}<th>{{ labels.actions }}</th>{% endif %}
         </tr>
     </thead>
     <tbody>
         {% for row in rows %}
         <tr>
+            {% if can_write and resource.can_delete %}
+            <td><input type="checkbox" form="bulk-form" name="id_{{ row.id }}" value="1" aria-label="{{ labels.bulk_delete }}"></td>
+            {% endif %}
             {% for col in columns %}
             <td>
                 {% if col.column_type == 'Boolean' %}
-                    {% if row[col.key] %}Yes{% else %}No{% endif %}
+                    {% if row[col.key] %}{{ labels.yes }}{% else %}{{ labels.no }}{% endif %}
                 {% else %}
                     {{ row[col.key] }}
                 {% endif %}
             </td>
             {% endfor %}
-            {% if resource.can_delete %}
+            {% if can_write and resource.can_delete %}
             <td>
-                <a href="{{ resource.path_edit }}{{ row.id }}" class="btn" style="border: 1px solid var(--border);">Edit</a>
-                <form action="{{ resource.path_delete }}{{ row.id }}/delete" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure?');">
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                <a href="{{ resource.path_edit }}{{ row.id }}" class="btn" style="border: 1px solid var(--border);">{{ labels.edit }}</a>
+                <form action="{{ resource.path_delete }}{{ row.id }}/delete" method="POST" style="display: inline;" onsubmit="return confirm('{{ labels.confirm_delete }}');">
+                    <input type="hidden" name="_csrf" value="{{ csrf }}">
+                    <button type="submit" class="btn btn-danger">{{ labels.delete }}</button>
                 </form>
             </td>
             {% endif %}
@@ -57,8 +87,8 @@
         {% else %}
         {% set col_count = columns | length %}
         <tr>
-            <td colspan="{% if resource.can_delete %}{{ col_count + 1 }}{% else %}{{ col_count }}{% endif %}" style="text-align: center; padding: 3rem; color: var(--text-light);">
-                No records found.
+            <td colspan="{% if can_write and resource.can_delete %}{{ col_count + 2 }}{% else %}{{ col_count }}{% endif %}" style="text-align: center; padding: 3rem; color: var(--text-light);">
+                {{ labels.no_records }}
             </td>
         </tr>
         {% endfor %}
@@ -68,13 +98,11 @@
 <div class="pagination">
     {% if total_pages > 1 %}
         {% if page > 1 %}
-        <a href="{{ resource.path_list }}?page={{ page - 1 }}" class="btn">&laquo; Prev</a>
+        <a href="{{ resource.path_list }}?{{ link_query }}page={{ page - 1 }}" class="btn">&laquo; {{ labels.prev }}</a>
         {% endif %}
-        
-        <span style="margin: 0 1rem;">Page {{ page }} of {{ total_pages }}</span>
-        
+        <span style="margin: 0 1rem;">{{ labels.page }} {{ page }} {{ labels.of }} {{ total_pages }}</span>
         {% if page < total_pages %}
-        <a href="{{ resource.path_list }}?page={{ page + 1 }}" class="btn">Next &raquo;</a>
+        <a href="{{ resource.path_list }}?{{ link_query }}page={{ page + 1 }}" class="btn">{{ labels.next }} &raquo;</a>
         {% endif %}
     {% endif %}
 </div>

@@ -13,7 +13,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-actix-crud-admin = "0.1.0"
+actix-crud-admin = "0.2.0"
 actix-web = "4"
 actix-session = { version = "0.9", features = ["cookie-session"] }
 tokio = { version = "1", features = ["full"] }

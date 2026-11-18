@@ -6,8 +6,6 @@
 //!
 //! ```rust,no_run
 //! use actix_web::{web, App, HttpServer};
-//! use actix_session::storage::CookieSessionStore;
-//! use actix_session::SessionMiddleware;
 //! use actix_crud_admin::auth::{UserStore, JsonUserStore};
 //! use actix_crud_admin::{AdminRegistry, AdminSite, init_templates};
 //! use std::sync::Arc;
@@ -28,7 +26,9 @@
 //!         App::new()
 //!             .app_data(web::Data::new(templates.clone()))
 //!             .app_data(web::Data::new(store.clone() as Arc<dyn UserStore>))
-//!             .wrap(SessionMiddleware::new(CookieSessionStore::default(), actix_web::cookie::Key::generate()))
+//!             .wrap(actix_crud_admin::auth::session_middleware(
+//!                 actix_web::cookie::Key::generate(),
+//!             ))
 //!             .configure(|cfg| {
 //!                 AdminSite::new("/admin")
 //!                     .with_user_store(store.clone())
@@ -41,30 +41,59 @@
 //! }
 //! ```
 
+//! ## Guías
+//!
+//! - [De la tabla al panel](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/introspection.md)
+//!   — admin automático desde una tabla existente.
+//! - [Formularios y base de datos](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/forms.md)
+//!   — recursos escritos a mano.
+//! - [Quick start](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/quick-start.md)
+
+pub mod audit;
 pub mod auth;
 pub mod cli;
-pub mod resource;
-pub mod registry;
-pub mod site;
-pub mod types;
+pub mod generic;
 pub mod handlers;
+pub mod labels;
+pub mod registry;
+pub mod resource;
+pub mod schema;
+pub mod site;
+#[cfg(feature = "sqlite")]
+pub mod sqlite;
+pub mod theme;
+pub mod types;
 
-pub use resource::AdminResource;
+pub use audit::{AuditEntry, AuditStore, JsonAuditLog};
+pub use generic::GenericTable;
+pub use labels::Labels;
 pub use registry::AdminRegistry;
+pub use resource::AdminResource;
+pub use schema::SchemaSource;
 pub use site::AdminSite;
+pub use theme::Theme;
 
-use tera::Tera;
 use std::sync::Arc;
+use tera::Tera;
 
 /// Helper to create a Tera instance with embedded templates.
 pub fn init_templates() -> Tera {
     let mut tera = Tera::default();
 
-    tera.add_raw_template("base.html", include_str!("templates/base.html")).unwrap();
-    tera.add_raw_template("login.html", include_str!("templates/login.html")).unwrap();
-    tera.add_raw_template("dashboard.html", include_str!("templates/dashboard.html")).unwrap();
-    tera.add_raw_template("list.html", include_str!("templates/list.html")).unwrap();
-    tera.add_raw_template("form.html", include_str!("templates/form.html")).unwrap();
+    tera.add_raw_template("base.html", include_str!("templates/base.html"))
+        .unwrap();
+    tera.add_raw_template("login.html", include_str!("templates/login.html"))
+        .unwrap();
+    tera.add_raw_template("dashboard.html", include_str!("templates/dashboard.html"))
+        .unwrap();
+    tera.add_raw_template("list.html", include_str!("templates/list.html"))
+        .unwrap();
+    tera.add_raw_template("form.html", include_str!("templates/form.html"))
+        .unwrap();
+    tera.add_raw_template("password.html", include_str!("templates/password.html"))
+        .unwrap();
+    tera.add_raw_template("audit.html", include_str!("templates/audit.html"))
+        .unwrap();
 
     tera
 }

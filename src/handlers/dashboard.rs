@@ -1,9 +1,11 @@
+use super::ctx;
+use crate::labels::AdminLabels;
+use crate::registry::SharedRegistry;
+use crate::resource::{AdminPrefix, AdminTitle};
+use crate::theme::AdminTheme;
 use actix_session::Session;
 use actix_web::{web, HttpResponse, Responder};
-use tera::{Context, Tera};
-use crate::registry::SharedRegistry;
-use crate::resource::{AdminTitle, AdminPrefix};
-use log::{info, error, warn};
+use tera::Tera;
 
 pub async fn index(
     session: Session,
@@ -11,69 +13,45 @@ pub async fn index(
     tmpl: web::Data<Tera>,
     title: web::Data<AdminTitle>,
     prefix: web::Data<AdminPrefix>,
+    labels: web::Data<AdminLabels>,
+    theme: web::Data<AdminTheme>,
 ) -> impl Responder {
-    info!("Accessing dashboard");
-    
-    let user = match session.get::<String>("admin_user") {
-        Ok(Some(u)) => {
-            info!("User authenticated: {}", u);
-            u
-        },
-        _ => {
-            warn!("User not authenticated, redirecting to login");
+    let user = match ctx::current_user(&session) {
+        Some(user) => user,
+        None => {
             return HttpResponse::Found()
                 .insert_header(("Location", format!("/{}/login", prefix.0)))
-                .finish();
+                .finish()
         }
     };
 
-    let mut ctx = Context::new();
-    ctx.insert("title", &title.0);
-    ctx.insert("page_title", "Dashboard");
-    ctx.insert("user", &user);
-    ctx.insert("path_dashboard", &format!("/{}/", prefix.0));
-    ctx.insert("path_logout", &format!("/{}/logout", prefix.0));
-    ctx.insert("current_slug", ""); // Dashboard doesn't have a current slug
-    
-    // Simplify resources to basic strings to test serialization
-    let simple_resources: Vec<_> = registry.all().iter().map(|r| {
-        serde_json::json!({
-            "name": r.name(),
-            "plural_name": r.plural_name(),
-            "slug": r.slug(),
-            "icon": r.icon(),
-            "path_list": format!("/{}/{}/", prefix.0, r.slug()),
-            "path_new": format!("/{}/{}/new", prefix.0, r.slug()),
-        })
-    }).collect();
-    info!("Found {} resources", simple_resources.len());
-    ctx.insert("resources", &simple_resources);
+    let mut context = ctx::page(&title, &labels, &theme);
+    ctx::paths(&mut context, &prefix);
+    ctx::write_flag(&mut context, &session);
+    context.insert("page_title", &labels.0.dashboard);
+    context.insert("user", &user);
+    context.insert("current_slug", "");
 
-    match tmpl.render("dashboard.html", &ctx) {
-        Ok(rendered) => {
-            info!("Dashboard template rendered successfully");
-            HttpResponse::Ok().content_type("text/html").body(rendered)
-        },
-        Err(e) => {
-            error!("Dashboard template rendering failed: {}", e);
-            error!("Template context: title={:?}, page_title={:?}, user={:?}, resources={:?}", 
-                   title.0, "Dashboard", user, simple_resources);
-            
-            // Try to render without resources to isolate the issue
-            let mut simple_ctx = Context::new();
-            simple_ctx.insert("title", &title.0);
-            simple_ctx.insert("page_title", "Dashboard");
-            simple_ctx.insert("user", &user);
-            simple_ctx.insert("path_dashboard", &format!("/{}/", prefix.0));
-            simple_ctx.insert("path_logout", &format!("/{}/logout", prefix.0));
-            simple_ctx.insert("resources", &Vec::<crate::resource::ResourceInfo>::new());
-            
-            match tmpl.render("dashboard.html", &simple_ctx) {
-                Ok(_) => error!("Template works without resources - issue with ResourceInfo serialization"),
-                Err(e2) => error!("Template fails even without resources: {}", e2),
-            }
-            
-            HttpResponse::InternalServerError().body(format!("Template error: {}", e))
-        }
+    let resources: Vec<_> = registry
+        .all()
+        .iter()
+        .map(|resource| {
+            serde_json::json!({
+                "name": resource.name(),
+                "plural_name": resource.plural_name(),
+                "slug": resource.slug(),
+                "icon": resource.icon(),
+                "can_create": resource.can_create(),
+                "can_delete": resource.can_delete(),
+                "path_list": format!("/{}/{}/", prefix.0, resource.slug()),
+                "path_new": format!("/{}/{}/new", prefix.0, resource.slug()),
+            })
+        })
+        .collect();
+    context.insert("resources", &resources);
+
+    match tmpl.render("dashboard.html", &context) {
+        Ok(rendered) => HttpResponse::Ok().content_type("text/html").body(rendered),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Template error: {}", e)),
     }
 }

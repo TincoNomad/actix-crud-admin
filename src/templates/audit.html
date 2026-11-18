@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 style="margin-top: 0;">{{ labels.audit }}</h2>
+
+{% if entries %}
+<table>
+    <thead>
+        <tr>
+            <th>{{ labels.audit_when }}</th>
+            <th>{{ labels.audit_user }}</th>
+            <th>{{ labels.audit_action }}</th>
+            <th>{{ labels.audit_resource }}</th>
+            <th>{{ labels.audit_record }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.timestamp }}</td>
+            <td>{{ entry.user }}</td>
+            <td>{{ entry.action }}</td>
+            <td>{{ entry.resource }}</td>
+            <td>{{ entry.record_id }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: var(--text-light);">{{ labels.no_audit }}</p>
+{% endif %}
+{% endblock %}

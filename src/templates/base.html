@@ -1,23 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang | default(value='en') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - {{ page_title }}</title>
     <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-            --sidebar-bg: #1e293b;
-            --sidebar-text: #f8fafc;
-            --bg: #f1f5f9;
-            --text: #334155;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-            --white: #ffffff;
-            --error: #ef4444;
-            --success: #22c55e;
-        }
+        {{ theme_css | safe }}
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -242,14 +230,14 @@
         <div class="sidebar-header">{{ title }}</div>
         <nav>
             {% if user %}
-            <a href="{{ path_dashboard }}" class="{% if page_title == 'Dashboard' %}active{% endif %}">Dashboard</a>
-            {% for res in resources %}
+            <a href="{{ path_dashboard }}" class="{% if current_slug == '' %}active{% endif %}">{{ labels.dashboard }}</a>
+            {% for res in resources | default(value=[]) %}
             <div class="nav-item">
                 <a href="{{ res.path_list }}" class="{% if current_slug == res.slug %}active{% endif %}">
                     {{ res.plural_name }}
                 </a>
-                {% if res.can_create %}
-                <a href="{{ res.path_new }}" class="nav-add" title="Add {{ res.name }}">+</a>
+                {% if can_write and res.can_create %}
+                <a href="{{ res.path_new }}" class="nav-add" title="{{ labels.add }} {{ res.name }}">+</a>
                 {% endif %}
             </div>
             {% endfor %}
@@ -264,8 +252,10 @@
             </div>
             <div class="user-menu">
                 {% if user %}
-                <span>Logged in as <strong>{{ user }}</strong></span>
-                <a href="{{ path_logout }}" class="logout-btn">Logout</a>
+                <span>{{ labels.logged_in_as }} <strong>{{ user }}</strong></span>
+                <a href="{{ path_password }}" class="logout-btn">{{ labels.change_password }}</a>
+                <a href="{{ path_audit }}" class="logout-btn">{{ labels.audit }}</a>
+                <a href="{{ path_logout }}" class="logout-btn">{{ labels.logout }}</a>
                 {% endif %}
             </div>
         </header>

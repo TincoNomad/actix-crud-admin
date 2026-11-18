@@ -15,6 +15,10 @@ asking you to write the handlers.
 - 🔍 **Search & pagination** - Built-in search and paginated lists
 - 📝 **Form validation** - Automatic form generation with validation
 - 🎯 **Type-safe** - Full Rust type safety with async trait support
+- 🗂️ **Tables without code** - Register an existing table and the admin reads its schema
+- 🛡️ **CSRF + permissions built in** - Session tokens on every form, superuser-only writes
+- 🕵️ **Audit trail** - Every create, update and delete is recorded
+- 🎨 **Labels and palette** - Spanish UI and client colors without touching templates
 - 📦 **Easy integration** - Implement one trait and you're done
 
 ## Quick Start
@@ -136,6 +140,29 @@ async fn main() -> std::io::Result<()> {
 
 Run and visit `http://localhost:8080/admin` - login with `admin`/`admin`.
 
+## Admin from an existing table
+
+If the table already exists, skip `AdminResource` entirely — the crate reads the
+schema from the database:
+
+```toml
+actix-crud-admin = { version = "0.2.0", features = ["sqlite"] }
+```
+
+```rust,no_run
+use std::sync::Arc;
+use actix_crud_admin::{GenericTable, SchemaSource};
+use actix_crud_admin::sqlite::SqliteSource;
+
+# async fn run(registry: &mut actix_crud_admin::AdminRegistry) {
+let source: Arc<dyn SchemaSource> = Arc::new(SqliteSource::connect("sqlite:app.db").await.unwrap());
+registry.register(GenericTable::new(source, "products").await.unwrap());
+# }
+```
+
+You get list, search, pagination, sort, create, edit, delete, and foreign key
+selects populated from the target table. See [docs/introspection.md](docs/introspection.md).
+
 ## Authentication
 
 The library uses a `UserStore` trait for authentication. A `JsonUserStore` backed by a JSON file is included:
@@ -253,7 +280,8 @@ The prefix is stored without a leading slash to avoid double-slash issues (e.g. 
 ## Testing
 
 ```bash
-cargo test    # 23+ tests covering auth, middleware, handlers, CLI, resources
+cargo test                  # auth, middleware, handlers, CLI, resources, schema-driven tables
+cargo test --features sqlite # includes the SQLite integration tests
 ```
 
 ## Security Best Practices
@@ -262,32 +290,29 @@ This library provides secure defaults (Argon2 hashing, session management, HTML 
 
 ### CSRF Protection
 
-Admin CRUD operations modify state via POST requests. Add a CSRF middleware to prevent cross-site request forgery:
+Built in. Every form carries a session-bound token, and every write route
+(`login`, `create`, `update`, `delete`, `bulk`) rejects requests without it.
+Nothing to configure.
 
-```toml
-actix-csrf = "0.3"
-```
+### Permissions
 
-```rust
-// Wrap your App with CSRF protection
-use actix_csrf::Csrf;
-use actix_csrf::storage::CookieStore;
-
-App::new()
-    .wrap(Csrf::new(CookieStore::default()))
-    // ...
-```
+The session remembers whether the user is a superuser. Readers can browse,
+search, filter and export; only superusers can create, update or delete. The UI
+hides the buttons, and the handlers return `403` if a reader posts anyway.
 
 ### Secure Cookies
 
-Configure session cookies for production:
+Use the bundled middleware, which always sets `Secure`, `HttpOnly` and
+`SameSite::Lax`. The key must be stable across restarts, or every deploy logs
+everybody out:
 
 ```rust
-SessionMiddleware::builder(CookieSessionStore::default(), actix_web::cookie::Key::generate())
-    .cookie_secure(true)       // HTTPS only
-    .cookie_http_only(true)    // Not accessible via JavaScript
-    .cookie_same_site(actix_web::cookie::SameSite::Lax)  // CSRF mitigation
-    .build()
+use actix_crud_admin::auth::session_middleware;
+
+let key = actix_web::cookie::Key::from(
+    std::env::var("ADMIN_SECRET_KEY").expect("ADMIN_SECRET_KEY").as_bytes(),
+);
+App::new().wrap(session_middleware(key))
 ```
 
 ### Rate Limiting
