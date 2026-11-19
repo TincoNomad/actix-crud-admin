@@ -300,6 +300,12 @@ The session remembers whether the user is a superuser. Readers can browse,
 search, filter and export; only superusers can create, update or delete. The UI
 hides the buttons, and the handlers return `403` if a reader posts anyway.
 
+### Audit log
+
+`JsonAuditLog` appends one JSON object per line (NDJSON): writes are O(1) and the
+file is never rewritten. It grows forever, so rotate it with `logrotate`. It is
+not a legal-grade audit trail; for that, implement `AuditStore` over your database.
+
 ### Secure Cookies
 
 Use the bundled middleware, which always sets `Secure`, `HttpOnly` and
