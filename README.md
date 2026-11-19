@@ -173,6 +173,34 @@ registry.register(GenericTable::new(source, "products").await.unwrap());
 You get list, search, pagination, sort, create, edit, delete, and foreign key
 selects populated from the target table. See [docs/introspection.md](docs/introspection.md).
 
+## Tested with
+
+The SQLite and PostgreSQL adapters use **SQLx**. The `SchemaSource` trait is meant to
+work over any ORM, but only SQLx has been tested, so treat that claim as unproven.
+
+| Driver / ORM | SQLite | PostgreSQL | MySQL |
+|---|---|---|---|
+| SQLx | ✅ shipped | ✅ shipped | not implemented |
+| Diesel | — | ⏳ wanted | ⏳ wanted |
+| SeaORM | — | ⏳ wanted | ⏳ wanted |
+| rusqlite | ⏳ wanted | — | — |
+
+If you try it, paste this and open an issue — a failure is as useful as a pass:
+
+```
+- orm:            Diesel 2.x / SeaORM 1.x / other
+- db:             Postgres 16 / MySQL 8 / SQLite 3 / other
+- adapter uses:   only that ORM   (say so if SQLx leaked in)
+- compiles:       yes / no
+- lines:          ~120
+- blocked at:     describe / rows / insert / dynamic columns / nothing
+- trait change:   none / which method and why
+- time:           2h
+- link:           gist or fork
+```
+
+Full instructions, rules and the eight scenarios: [docs/agnostic-test.md](docs/agnostic-test.md).
+
 ## Authentication
 
 The library uses a `UserStore` trait for authentication. A `JsonUserStore` backed by a JSON file is included:
