@@ -7,12 +7,15 @@ use serde_json::Value;
 use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
 use sqlx::Row as _;
 
-use crate::schema::{ColumnKind, ColumnSchema, ForeignKey, RowMap, SchemaSource, TableSchema};
+use crate::schema::{
+    ColumnKind, ColumnSchema, ForeignKey, RowMap, SchemaCache, SchemaSource, TableSchema,
+};
 use crate::types::{AdminError, ListQuery, ListResult};
 
 /// Reads tables directly from a SQLite database.
 pub struct SqliteSource {
     pool: SqlitePool,
+    cache: SchemaCache,
 }
 
 /// Rows offered in a foreign key select before it gets unwieldy.
@@ -70,18 +73,37 @@ impl SqliteSource {
             .connect(url)
             .await
             .map_err(db_err)?;
-        Ok(Self { pool })
+        Ok(Self {
+            pool,
+            cache: SchemaCache::default(),
+        })
     }
 
     /// Reuse an existing pool.
     pub fn from_pool(pool: SqlitePool) -> Self {
-        Self { pool }
+        Self {
+            pool,
+            cache: SchemaCache::default(),
+        }
+    }
+
+    /// The underlying pool, for migrations or custom queries.
+    pub fn pool(&self) -> &SqlitePool {
+        &self.pool
+    }
+
+    /// Drops the cached schemas, e.g. after adding a column.
+    pub fn clear_cache(&self) {
+        self.cache.clear();
     }
 }
 
 #[async_trait]
 impl SchemaSource for SqliteSource {
     async fn describe(&self, table: &str) -> Result<TableSchema, AdminError> {
+        if let Some(cached) = self.cache.get(table) {
+            return Ok(cached);
+        }
         let pragma = format!("PRAGMA table_info({})", quote(table));
         let info = sqlx::query(&pragma)
             .fetch_all(&self.pool)
@@ -126,10 +148,12 @@ impl SchemaSource for SqliteSource {
             })
             .collect();
 
-        Ok(TableSchema {
+        let schema = TableSchema {
             name: table.to_string(),
             columns,
-        })
+        };
+        self.cache.insert(table, &schema);
+        Ok(schema)
     }
 
     async fn rows(&self, table: &str, query: ListQuery) -> Result<ListResult, AdminError> {

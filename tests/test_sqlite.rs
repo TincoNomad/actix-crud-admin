@@ -236,6 +236,28 @@ async fn list_ignores_unknown_sort_columns() {
     assert!(table.get("1").await.is_ok());
 }
 
+#[tokio::test]
+async fn describe_is_cached_until_cleared() {
+    let source = source().await;
+    assert!(source.describe("products").await.is_ok());
+
+    sqlx::query("DROP TABLE products")
+        .execute(source.pool())
+        .await
+        .unwrap();
+
+    assert!(
+        source.describe("products").await.is_ok(),
+        "the schema must come from the cache"
+    );
+
+    source.clear_cache();
+    assert!(matches!(
+        source.describe("products").await,
+        Err(AdminError::NotFound)
+    ));
+}
+
 mod http {
     use super::*;
     use actix_crud_admin::audit::{AuditStore, JsonAuditLog};

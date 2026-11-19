@@ -9,7 +9,9 @@ use sqlx::postgres::{PgConnectOptions, PgPool, PgPoolOptions};
 use sqlx::Row as _;
 use std::str::FromStr;
 
-use crate::schema::{ColumnKind, ColumnSchema, ForeignKey, RowMap, SchemaSource, TableSchema};
+use crate::schema::{
+    ColumnKind, ColumnSchema, ForeignKey, RowMap, SchemaCache, SchemaSource, TableSchema,
+};
 use crate::types::{AdminError, ListQuery, ListResult};
 
 const MAX_OPTIONS: i64 = 500;
@@ -19,6 +21,7 @@ const SCHEMA: &str = "public";
 /// Reads tables directly from a PostgreSQL database.
 pub struct PostgresSource {
     pool: PgPool,
+    cache: SchemaCache,
 }
 
 impl PostgresSource {
@@ -33,12 +36,23 @@ impl PostgresSource {
             .connect_with(options)
             .await
             .map_err(db_err)?;
-        Ok(Self { pool })
+        Ok(Self {
+            pool,
+            cache: SchemaCache::default(),
+        })
     }
 
     /// Reuse an existing pool.
     pub fn from_pool(pool: PgPool) -> Self {
-        Self { pool }
+        Self {
+            pool,
+            cache: SchemaCache::default(),
+        }
+    }
+
+    /// Drops the cached schemas, e.g. after adding a column.
+    pub fn clear_cache(&self) {
+        self.cache.clear();
     }
 
     /// The underlying pool, for migrations or custom queries.
@@ -50,6 +64,9 @@ impl PostgresSource {
 #[async_trait]
 impl SchemaSource for PostgresSource {
     async fn describe(&self, table: &str) -> Result<TableSchema, AdminError> {
+        if let Some(cached) = self.cache.get(table) {
+            return Ok(cached);
+        }
         let columns = sqlx::query(
             "SELECT column_name, data_type, is_nullable, column_default
              FROM information_schema.columns
@@ -131,10 +148,12 @@ impl SchemaSource for PostgresSource {
             })
             .collect();
 
-        Ok(TableSchema {
+        let schema = TableSchema {
             name: table.to_string(),
             columns,
-        })
+        };
+        self.cache.insert(table, &schema);
+        Ok(schema)
     }
 
     async fn rows(&self, table: &str, query: ListQuery) -> Result<ListResult, AdminError> {
