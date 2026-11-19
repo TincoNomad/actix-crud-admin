@@ -65,6 +65,8 @@ sesiones, logs ni migraciones.
 
 ## Límites conocidos
 
+- **El CSV es un reporte, no un import.** Las claves foráneas salen como nombre
+  y los booleanos como `true`/`false`; si necesitas reimportar, usa los ids.
 - **No crea tablas.** Las migraciones siguen siendo tuyas (Diesel, SQLx, SQL manual).
   Si el cliente ya tiene la base de datos, esto es justo lo que quieres.
 - **El esquema se lee al arrancar.** Una columna nueva aparece después de reiniciar.

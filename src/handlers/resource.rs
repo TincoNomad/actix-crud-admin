@@ -475,6 +475,9 @@ pub async fn bulk(
 }
 
 /// Downloads the current selection (search, sort and filters) as CSV.
+///
+/// This is a human-readable report, not an import format: foreign keys are
+/// exported as their labels (not ids) and booleans stay `true`/`false`.
 pub async fn export(
     session: Session,
     registry: web::Data<SharedRegistry>,
