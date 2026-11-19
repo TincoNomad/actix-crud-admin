@@ -2,6 +2,9 @@
 
 This example shows how to integrate `actix-crud-admin` with a Diesel/PostgreSQL backend, following the `src/admin/` + `src/models/` convention.
 
+> This is a nested package, so `cargo test` at the repository root does not build
+> it. Run `cargo check` inside this folder after changing the public API.
+
 ## Requirements
 
 - PostgreSQL server running locally.
