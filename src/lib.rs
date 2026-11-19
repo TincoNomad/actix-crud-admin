@@ -41,12 +41,12 @@
 //! }
 //! ```
 
-//! ## Guías
+//! ## Guides
 //!
-//! - [De la tabla al panel](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/introspection.md)
-//!   — admin automático desde una tabla existente.
-//! - [Formularios y base de datos](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/forms.md)
-//!   — recursos escritos a mano.
+//! - [Admin for an existing table](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/introspection.md)
+//!   — no struct, no CRUD methods, just a table name.
+//! - [Forms and database integration](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/forms.md)
+//!   — hand-written resources.
 //! - [Quick start](https://github.com/TincoNomad/actix-crud-admin/blob/main/docs/quick-start.md)
 
 pub mod audit;
