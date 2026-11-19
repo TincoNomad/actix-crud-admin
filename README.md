@@ -199,7 +199,8 @@ If you try it, paste this and open an issue — a failure is as useful as a pass
 - link:           gist or fork
 ```
 
-Full instructions, rules and the eight scenarios: [docs/agnostic-test.md](docs/agnostic-test.md).
+Full instructions and the eight scenarios: [docs/agnostic-test.md](docs/agnostic-test.md).
+Post your result in the [compatibility thread](https://github.com/TincoNomad/actix-crud-admin/issues/1).
 
 ## Authentication
 
