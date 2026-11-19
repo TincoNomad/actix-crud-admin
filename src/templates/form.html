@@ -125,6 +125,7 @@
                 <input id="id_{{ field.key }}" type="{{ field.field_type | lower }}" name="{{ field.key }}"
                        value="{{ values[field.key] | default(value='') }}"
                        placeholder="{{ field.placeholder | default(value='') }}"
+                       {% if field.field_type == 'Number' %}step="any"{% endif %}
                        class="form-control" {% if field.required %}required{% endif %}>
                 {% endif %}
 
