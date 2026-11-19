@@ -77,7 +77,7 @@ App::new()
     .configure(|cfg| {
         AdminSite::new("/admin")
             .with_user_store(store.clone())
-            .mount(cfg, registry)
+            .mount(cfg, registry.clone())
     })
 ```
 
@@ -192,7 +192,7 @@ This avoids double-slash issues (e.g. `//admin/login`).
 Add custom routes alongside admin routes:
 
 ```rust
-AdminSite::new("/admin").mount(cfg, registry);
+AdminSite::new("/admin").mount(cfg, registry.clone());
 cfg.route("/admin/custom", web::get().to(custom_handler));
 ```
 
@@ -203,7 +203,7 @@ HttpServer::new(move || {
     App::new()
         .wrap(middleware::Logger::default())
         .configure(|cfg| {
-            AdminSite::new("/admin").mount(cfg, registry)
+            AdminSite::new("/admin").mount(cfg, registry.clone())
         })
         .wrap(custom_middleware)
 })
@@ -285,7 +285,7 @@ use actix_csrf::storage::CookieStore;
 App::new()
     .wrap(Csrf::new(CookieStore::default()))
     .configure(|cfg| {
-        AdminSite::new("/admin").mount(cfg, registry)
+        AdminSite::new("/admin").mount(cfg, registry.clone())
     })
 ```
 
@@ -294,11 +294,8 @@ App::new()
 Configure session cookies for production to prevent XSS and CSRF attacks:
 
 ```rust
-SessionMiddleware::builder(CookieSessionStore::default(), actix_web::cookie::Key::generate())
-    .cookie_secure(true)           // HTTPS only
-    .cookie_http_only(true)        // Not accessible via JavaScript
-    .cookie_same_site(actix_web::cookie::SameSite::Lax)  // CSRF mitigation
-    .build()
+// Sets Secure, HttpOnly and SameSite::Lax for you.
+actix_crud_admin::auth::session_middleware(actix_web::cookie::Key::generate())
 ```
 
 ### HTTPS
@@ -332,7 +329,7 @@ HttpServer::new(move || {
     App::new()
         .wrap(Governor::new(&governor_conf))
         .configure(|cfg| {
-            AdminSite::new("/admin").mount(cfg, registry)
+            AdminSite::new("/admin").mount(cfg, registry.clone())
         })
 })
 ```

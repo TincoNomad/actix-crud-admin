@@ -119,7 +119,7 @@ HttpServer::new(move || {
 
     App::new()
         .configure(|cfg| {
-            AdminSite::new("/admin").mount(cfg, registry)
+            AdminSite::new("/admin").mount(cfg, registry.clone())
         })
 })
 ```

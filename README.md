@@ -21,13 +21,25 @@ asking you to write the handlers.
 - 🎨 **Labels and palette** - Spanish UI and client colors without touching templates
 - 📦 **Easy integration** - Implement one trait and you're done
 
+## Try it
+
+No database and no config needed:
+
+```bash
+git clone https://github.com/TincoNomad/actix-crud-admin
+cd actix-crud-admin
+cargo run --example memory
+```
+
+Open http://localhost:8080/admin and log in with `admin` / `admin`.
+
 ## Quick Start
 
 Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-actix-crud-admin = "0.2.0"
+actix-crud-admin = "0.3.0"
 actix-web = "4"
 actix-session = { version = "0.9", features = ["cookie-session"] }
 tokio = { version = "1", features = ["full"] }
@@ -37,8 +49,6 @@ tokio = { version = "1", features = ["full"] }
 
 ```rust,no_run
 use actix_web::{web, App, HttpServer};
-use actix_session::storage::CookieSessionStore;
-use actix_session::SessionMiddleware;
 use actix_crud_admin::auth::{UserStore, JsonUserStore};
 use actix_crud_admin::{AdminRegistry, AdminSite, AdminResource, init_templates};
 use async_trait::async_trait;
@@ -124,12 +134,12 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(templates.clone()))
             .app_data(web::Data::new(store.clone() as Arc<dyn UserStore>))
-            .wrap(SessionMiddleware::new(
-                CookieSessionStore::default(),
+            // Production: use a stable key from the environment.
+            .wrap(actix_crud_admin::auth::session_middleware(
                 actix_web::cookie::Key::generate()
             ))
             .configure(|cfg| {
-                AdminSite::new("/admin").title("My Admin").with_user_store(store.clone()).mount(cfg, registry)
+                AdminSite::new("/admin").title("My Admin").with_user_store(store.clone()).mount(cfg, registry.clone())
             })
     })
     .bind(("127.0.0.1", 8080))?
@@ -146,7 +156,7 @@ If the table already exists, skip `AdminResource` entirely — the crate reads t
 schema from the database:
 
 ```toml
-actix-crud-admin = { version = "0.2.0", features = ["sqlite"] }
+actix-crud-admin = { version = "0.3.0", features = ["sqlite"] }
 ```
 
 ```rust,no_run
@@ -181,7 +191,7 @@ Pass the store to both the app data and `AdminSite`:
 .configure(|cfg| {
     AdminSite::new("/admin")
         .with_user_store(store.clone())
-        .mount(cfg, registry)
+        .mount(cfg, registry.clone())
 })
 ```
 
@@ -236,7 +246,7 @@ All CLI functions are `async` — call them from within a Tokio runtime (`#[toki
 AdminSite::new("/admin")     // URL prefix (no trailing slash)
     .title("My Admin Panel")  // Site title
     .with_user_store(store)   // UserStore implementation
-    .mount(cfg, registry)     // Mount routes
+    .mount(cfg, registry.clone())     // Mount routes
 ```
 
 ### Resources

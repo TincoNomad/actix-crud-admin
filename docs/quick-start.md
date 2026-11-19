@@ -13,7 +13,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-actix-crud-admin = "0.2.0"
+actix-crud-admin = "0.3.0"
 actix-web = "4"
 actix-session = { version = "0.9", features = ["cookie-session"] }
 tokio = { version = "1", features = ["full"] }
@@ -71,8 +71,6 @@ impl AdminResource for ProductAdmin {
 
 ```rust
 use actix_web::{web, App, HttpServer};
-use actix_session::storage::CookieSessionStore;
-use actix_session::SessionMiddleware;
 use actix_crud_admin::auth::{UserStore, JsonUserStore};
 use actix_crud_admin::{AdminRegistry, AdminSite, init_templates};
 use std::sync::Arc;
@@ -94,15 +92,15 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(templates.clone()))
             .app_data(web::Data::new(store.clone() as Arc<dyn UserStore>))
-            .wrap(SessionMiddleware::new(
-                CookieSessionStore::default(),
+            // Production: use a stable key from the environment.
+            .wrap(actix_crud_admin::auth::session_middleware(
                 actix_web::cookie::Key::generate()
             ))
             .configure(|cfg| {
                 AdminSite::new("/admin")
                     .title("My Admin")
                     .with_user_store(store.clone())
-                    .mount(cfg, registry)
+                    .mount(cfg, registry.clone())
             })
     })
     .bind(("127.0.0.1", 8080))?
