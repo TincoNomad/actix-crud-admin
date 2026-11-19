@@ -101,7 +101,11 @@ impl SchemaSource for MyDieselSource {
 ```
 
 Con Diesel, `diesel::sql_query(...)` y `QueryableByName` bastan para cada método.
-El crate solo trae la implementación de SQLite; Postgres y MySQL todavía no.
+El crate trae implementaciones para **SQLite** (`features = ["sqlite"]`) y
+**PostgreSQL** (`features = ["postgres"]`); MySQL todavía no.
+
+En Postgres se asume el esquema `public` y las claves primarias de una sola
+columna. Con Supabase usa el session pooler (puerto 5432) y `?sslmode=require`.
 
 ## Cuándo NO usar esto
 

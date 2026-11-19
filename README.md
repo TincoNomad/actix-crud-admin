@@ -15,7 +15,7 @@ asking you to write the handlers.
 - 🔍 **Search & pagination** - Built-in search and paginated lists
 - 📝 **Form validation** - Automatic form generation with validation
 - 🎯 **Type-safe** - Full Rust type safety with async trait support
-- 🗂️ **Tables without code** - Register an existing table and the admin reads its schema
+- 🗂️ **Tables without code** - Register an existing table and the admin reads its schema (SQLite and PostgreSQL)
 - 🛡️ **CSRF + permissions built in** - Session tokens on every form, superuser-only writes
 - 🕵️ **Audit trail** - Every create, update and delete is recorded
 - 🎨 **Labels and palette** - Spanish UI and client colors without touching templates

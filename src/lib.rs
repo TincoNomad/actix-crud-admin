@@ -61,6 +61,8 @@ pub mod schema;
 pub mod site;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
+#[cfg(feature = "postgres")]
+pub mod postgres;
 pub mod theme;
 pub mod types;
 

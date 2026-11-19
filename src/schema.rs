@@ -59,6 +59,8 @@ pub struct ForeignKey {
 pub struct ColumnSchema {
     pub name: String,
     pub kind: ColumnKind,
+    /// Declared SQL type, used to cast bind parameters (e.g. `uuid`, `integer`).
+    pub sql_type: String,
     pub nullable: bool,
     pub primary_key: bool,
     /// The column has a SQL default, so the form can leave it empty.

@@ -15,6 +15,7 @@ fn products_schema() -> TableSchema {
     let column = |name: &str, kind, nullable, primary_key, foreign_key| ColumnSchema {
         name: name.to_string(),
         kind,
+        sql_type: "TEXT".into(),
         nullable,
         primary_key,
         has_default: false,

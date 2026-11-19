@@ -116,6 +116,7 @@ impl SchemaSource for SqliteSource {
                 });
                 ColumnSchema {
                     kind: ColumnKind::from_type_name(&type_name),
+                    sql_type: type_name.clone(),
                     nullable: row.get::<i64, _>("notnull") == 0,
                     primary_key: row.get::<i64, _>("pk") > 0,
                     has_default: row.get::<Option<String>, _>("dflt_value").is_some(),

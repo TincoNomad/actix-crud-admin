@@ -26,12 +26,12 @@ dialoguer = "0.11"
 log = "0.4"
 sqlx = { version = "0.8", optional = true, default-features = false, features = [
     "runtime-tokio",
-    "sqlite",
 ] }
 
 [features]
 default = []
-sqlite = ["dep:sqlx"]
+sqlite = ["dep:sqlx", "sqlx/sqlite"]
+postgres = ["dep:sqlx", "sqlx/postgres", "sqlx/tls-rustls"]
 
 [[bin]]
 name = "admin-cli"
@@ -49,4 +49,6 @@ env_logger = "0.10"
 sqlx = { version = "0.8", default-features = false, features = [
     "runtime-tokio",
     "sqlite",
+    "postgres",
+    "tls-rustls",
 ] }
